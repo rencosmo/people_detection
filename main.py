@@ -57,26 +57,28 @@ if __name__ == "__main__":
     model_path = 'frozen_inference_graph.pb'
     odapi = DetectorAPI(path_to_ckpt=model_path)
     threshold = 0.7
-    cap = cv2.VideoCapture("rtsp://admin:RRRQGG@192.168.1.15:554/h264/ch1/main/av_stream")
 
-    frame_num = 0
+    # cap = cv2.VideoCapture("rtsp://admin:RRRQGG@192.168.1.15:554/h264/ch1/main/av_stream")
+    cap = cv2.VideoCapture(0)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
     while True:
-        r, img = cap.read()
+        try:
+            r, img = cap.read()
+        except:
+            r = False
 
-        if img is not None:
-            frame_num += 1
-            if frame_num == 30:
-                frame_num = 0
-                img = cv2.resize(img, (480, 270))
-                boxes, scores, classes, num = odapi.processFrame(img)
-                # Visualization of the results of a detection.
-                for i in range(len(boxes)):
-                    # Class 1 represents human
-                    if classes[i] == 1 and scores[i] > threshold:
-                        box = boxes[i]
-                        cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255, 0, 0), 2)
-
-                cv2.imshow("preview", img)
-                key = cv2.waitKey(1)
-                if key & 0xFF == ord('q'):
-                    break
+        if r is True:
+            img = cv2.resize(img, (1280, 960))
+            boxes, scores, classes, num = odapi.processFrame(img)
+            # Visualization of the results of a detection.
+            for i in range(len(boxes)):
+                # Class 1 represents human
+                if classes[i] > 0 and scores[i] > threshold:
+                    box = boxes[i]
+                    cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255, 0, 0), 2)
+                    img = cv2.putText(img, str(classes[i])+"  "+str(int(scores[i]*100))+" %", (box[1], box[0]), font, 1.2, (255, 0, 0), 2)
+            cv2.imshow("preview", img)
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord('q'):
+                break
