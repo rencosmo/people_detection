@@ -2,6 +2,11 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import time
+import queue
+import time
+import threading
+
+q=queue.Queue()
 
 class DetectorAPI:
     def __init__(self, path_to_ckpt):
@@ -52,33 +57,42 @@ class DetectorAPI:
         self.sess.close()
         self.default_graph.close()
 
+def Receive():
+    print("start Reveive")
+    cap = cv2.VideoCapture("rtsp://admin:RRRQGG@192.168.1.11:554/h264/ch1/main/av_stream")
+    ret, frame = cap.read()
+    q.put(frame)
+    while ret:
+        ret, frame = cap.read()
+        q.put(frame)
 
-if __name__ == "__main__":
+def Display():
+    print("Start Displaying")
     model_path = 'frozen_inference_graph.pb'
     odapi = DetectorAPI(path_to_ckpt=model_path)
     threshold = 0.7
-
-    # cap = cv2.VideoCapture("rtsp://admin:RRRQGG@192.168.1.15:554/h264/ch1/main/av_stream")
-    cap = cv2.VideoCapture(0)
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     while True:
-        try:
-            r, img = cap.read()
-        except:
-            r = False
-
-        if r is True:
-            img = cv2.resize(img, (1280, 960))
+        if q.empty() !=True:
+            frame=q.get()
+            img = cv2.resize(frame, (1280, 960))
             boxes, scores, classes, num = odapi.processFrame(img)
-            # Visualization of the results of a detection.
             for i in range(len(boxes)):
                 # Class 1 represents human
                 if classes[i] > 0 and scores[i] > threshold:
                     box = boxes[i]
                     cv2.rectangle(img, (box[1], box[0]), (box[3], box[2]), (255, 0, 0), 2)
                     img = cv2.putText(img, str(classes[i])+"  "+str(int(scores[i]*100))+" %", (box[1], box[0]), font, 1.2, (255, 0, 0), 2)
-            cv2.imshow("preview", img)
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('q'):
-                break
+            q.queue.clear()   
+            cv2.imshow("Preview", img)
+        if cv2.waitKey(100) & 0xFF == ord('q'):
+            break
+
+
+if __name__ == "__main__":
+
+    p1=threading.Thread(target=Receive)
+    p2 = threading.Thread(target=Display)
+    p1.start()
+    p2.start()
