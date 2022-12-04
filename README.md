@@ -14,3 +14,7 @@ IP camera: IP and MAC are fixed. On the PC, video of the ip camera can be receiv
 9C:A3:A9:42:38:C9    172.20.14.123  rtsp://admin:@172.20.14.123/stream1
 
 9C:A3:A9:3F:4C:A7   172.20.14.114   rtsp://admin:@172.20.14.114/stream1
+
+9C:A3:A9:3C:DB:49   172.20.14.56    rtsp://admin:@172.20.14.56/stream1
+
+9C:A3:A9:39:E3:5C   172.20.14.232   rtsp://admin:@172.20.14.232/stream1
